@@ -1,43 +1,47 @@
 (function () {
   'use strict';
 
-  // Chaque palette : une couleur douce par carré, une couleur de traits et une couleur de chiffres.
+  // Palettes pour le mode « Couleurs ». Les premières couleurs sont les plus faciles
+  // à distinguer : une grille 4 × 4 n'utilise que les 4 premières.
   const PALETTES = {
     arcenciel: {
       name: 'Arc-en-ciel',
-      boxes: ['#ffd6d6', '#ffe8c7', '#fff6bf', '#dcf5c9', '#cdeefa', '#d9dcff', '#ecd9ff', '#ffd9ef', '#d4f5ec'],
-      line: '#4b3b8f', ink: '#2b2160', accent: '#e8505b',
+      colors: ['#e53935', '#1e88e5', '#fdd835', '#43a047', '#fb8c00', '#8e24aa', '#ec407a', '#6d4c41', '#212121'],
     },
-    ocean: {
-      name: 'Océan',
-      boxes: ['#d7f0fb', '#c7e7f5', '#dff6f3', '#cdeef0', '#e3effc', '#d2e9ff', '#c9f0e8', '#e0f2fa', '#d4e6f7'],
-      line: '#0d5c7d', ink: '#0a3d55', accent: '#1aa3b8',
+    pastel: {
+      name: 'Pastel',
+      colors: ['#ff8a8a', '#8ec5ff', '#ffe66d', '#9be39b', '#ffb870', '#c3a6ff', '#7fe0d6', '#d9b38c', '#b0b0b0'],
     },
-    foret: {
-      name: 'Forêt',
-      boxes: ['#e4f4d0', '#f4f0c8', '#d7efd4', '#eef6d7', '#f8ead0', '#dcefc4', '#ecf2cf', '#d2ebd9', '#f3eccc'],
-      line: '#3d6b2a', ink: '#2a4a1d', accent: '#d98a1f',
+    nature: {
+      name: 'Nature',
+      colors: ['#c62828', '#1565c0', '#f9a825', '#2e7d32', '#ef6c00', '#6a1b9a', '#81c784', '#795548', '#4fc3f7'],
     },
-    bonbon: {
-      name: 'Bonbon',
-      boxes: ['#ffd9ec', '#f1dcff', '#ffe3f1', '#e6dbff', '#ffd6e2', '#f6e0ff', '#ffe6ea', '#e9d9ff', '#ffdcf6'],
-      line: '#a2367a', ink: '#6e1f54', accent: '#ff6fa9',
+    daltonisme: {
+      // Palette Okabe-Ito, lisible par la plupart des personnes daltoniennes.
+      name: 'Daltonisme',
+      colors: ['#e69f00', '#0072b2', '#f0e442', '#009e73', '#d55e00', '#cc79a7', '#56b4e9', '#000000', '#999999'],
     },
   };
 
+  const SHAPE_NAMES = ['rond', 'carré', 'triangle', 'étoile', 'cœur', 'losange', 'hexagone', 'croix', 'lune'];
+
+  const THEME = { line: '#3b3363', ink: '#2b2160', accent: '#e8505b', boxA: '#ffffff', boxB: '#f1eef9' };
+
   const LEVELS = { facile: 1, moyen: 2, difficile: 3 };
   const LEVEL_NAMES = { facile: 'Facile', moyen: 'Moyen', difficile: 'Difficile' };
+  const SYMBOL_WORDS = { chiffres: 'chiffre', couleurs: 'couleur', formes: 'forme' };
 
   const form = document.getElementById('options');
   const sheets = document.getElementById('sheets');
   const paletteBox = document.getElementById('palettes');
+  const paletteField = document.getElementById('palette-field');
 
-  // Boutons de palette avec aperçu des couleurs.
+  // Boutons de palette avec aperçu des 4 premières couleurs.
   Object.entries(PALETTES).forEach(([key, p], i) => {
     const label = document.createElement('label');
-    const swatches = p.boxes.slice(0, 4).map(c => `<i style="background:${c}"></i>`).join('');
+    const swatches = p.colors.slice(0, 4).map(c => `<i style="background:${c}"></i>`).join('');
     label.innerHTML = `<input type="radio" name="palette" value="${key}"${i === 0 ? ' checked' : ''}>` +
-      `<span><b class="swatch" style="border-color:${p.line}">${swatches}</b>${p.name}</span>`;
+      `<span><b class="swatch">${swatches}</b>${p.name}</span>`;
     paletteBox.appendChild(label);
   });
 
@@ -46,6 +50,7 @@
     return {
       size: Number(f.get('size')),
       difficulty: f.get('difficulty'),
+      symbols: f.get('symbols'),
       palette: f.get('palette'),
       perPage: Number(f.get('perPage')),
       pages: Math.min(20, Math.max(1, Number(f.get('pages')) || 1)),
@@ -53,11 +58,12 @@
     };
   }
 
-  function updateGivensLabels() {
-    const size = Number(new FormData(form).get('size'));
+  function updateLabels() {
+    const s = settings();
     document.querySelectorAll('[data-givens]').forEach(el => {
-      el.textContent = `(${Sudoku.GIVENS[size][el.dataset.givens]} cases)`;
+      el.textContent = `(${Sudoku.GIVENS[s.size][el.dataset.givens]} cases)`;
     });
+    paletteField.hidden = s.symbols !== 'couleurs';
   }
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -68,57 +74,123 @@
     return node;
   }
 
-  // Dessine une grille en SVG. Si `showSolution`, les chiffres à trouver sont ajoutés en plus clair.
-  function renderGrid(game, palette, showSolution) {
+  function regularPolygon(n, r, rotation) {
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const a = rotation + (i * 2 * Math.PI) / n;
+      pts.push(`${(50 + r * Math.cos(a)).toFixed(1)},${(50 + r * Math.sin(a)).toFixed(1)}`);
+    }
+    return pts.join(' ');
+  }
+
+  function starPoints() {
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 ? 15 : 36, a = -Math.PI / 2 + (i * Math.PI) / 5;
+      pts.push(`${(50 + r * Math.cos(a)).toFixed(1)},${(53 + r * Math.sin(a)).toFixed(1)}`);
+    }
+    return pts.join(' ');
+  }
+
+  // Formes dessinées dans une case de 100 × 100, centrées sur (50, 50).
+  const SHAPES = [
+    () => el('circle', { cx: 50, cy: 50, r: 30 }),
+    () => el('rect', { x: 23, y: 23, width: 54, height: 54, rx: 4 }),
+    () => el('polygon', { points: '50,17 84,79 16,79' }),
+    () => el('polygon', { points: starPoints() }),
+    () => el('path', { d: 'M50 82 C22 63 14 46 21 33 C28 20 45 21 50 34 C55 21 72 20 79 33 C86 46 78 63 50 82 Z' }),
+    () => el('polygon', { points: '50,14 82,50 50,86 18,50' }),
+    () => el('polygon', { points: regularPolygon(6, 33, 0) }),
+    () => el('polygon', { points: '40,16 60,16 60,40 84,40 84,60 60,60 60,84 40,84 40,60 16,60 16,40 40,40' }),
+    () => el('path', { d: 'M58 16 A34 34 0 1 0 82 70 A28 28 0 1 1 58 16 Z' }),
+  ];
+
+  /*
+   * Symbole `value` (1..taille) dans une case de 100 × 100.
+   * `hint` = case trouvée sur la page des solutions : symbole plus petit, couleur d'accent.
+   */
+  function symbol(value, s, hint) {
+    const g = el('g', {});
+    if (s.symbols === 'couleurs') {
+      g.appendChild(el('circle', { cx: 50, cy: 50, r: hint ? 24 : 33, fill: PALETTES[s.palette].colors[value - 1],
+        stroke: THEME.ink, 'stroke-width': 2.5, 'stroke-dasharray': hint ? '6 5' : 'none' }));
+    } else if (s.symbols === 'formes') {
+      const shape = SHAPES[value - 1]();
+      shape.setAttribute('fill', hint ? THEME.accent : THEME.ink);
+      if (hint) shape.setAttribute('transform', 'translate(50 50) scale(.75) translate(-50 -50)');
+      g.appendChild(shape);
+    } else {
+      g.appendChild(el('text', {
+        x: 50, y: 50, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+        'font-size': 62, 'font-weight': hint ? 400 : 600, fill: hint ? THEME.accent : THEME.ink, class: 'digit',
+      }, String(value)));
+    }
+    return g;
+  }
+
+  function place(node, x, y) {
+    node.setAttribute('transform', `translate(${x} ${y})`);
+    return node;
+  }
+
+  // Dessine une grille en SVG. Si `showSolution`, les cases à trouver sont remplies en plus discret.
+  function renderGrid(game, s, showSolution) {
     const { size, puzzle, solution } = game;
     const box = Sudoku.BOXES[size];
     const cell = 100, total = size * cell;
     const svg = el('svg', { viewBox: `-6 -6 ${total + 12} ${total + 12}`, class: 'grid', role: 'img' });
     svg.setAttribute('aria-label', `Sudoku ${size} par ${size}`);
 
+    // Un carré sur deux légèrement teinté pour bien repérer les carrés.
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
-        const b = Sudoku.boxIndex(size, r, c);
-        svg.appendChild(el('rect', { x: c * cell, y: r * cell, width: cell, height: cell, fill: palette.boxes[b % palette.boxes.length] }));
+        const shade = (Math.floor(r / box.rows) + Math.floor(c / box.cols)) % 2;
+        svg.appendChild(el('rect', { x: c * cell, y: r * cell, width: cell, height: cell, fill: shade ? THEME.boxB : THEME.boxA }));
       }
     }
 
-    // Traits fins entre les cases, traits épais entre les carrés.
     for (let i = 1; i < size; i++) {
       const thickV = i % box.cols === 0, thickH = i % box.rows === 0;
-      svg.appendChild(el('line', { x1: i * cell, y1: 0, x2: i * cell, y2: total, stroke: palette.line,
+      svg.appendChild(el('line', { x1: i * cell, y1: 0, x2: i * cell, y2: total, stroke: THEME.line,
         'stroke-width': thickV ? 6 : 1.5, 'stroke-opacity': thickV ? 1 : 0.45 }));
-      svg.appendChild(el('line', { x1: 0, y1: i * cell, x2: total, y2: i * cell, stroke: palette.line,
+      svg.appendChild(el('line', { x1: 0, y1: i * cell, x2: total, y2: i * cell, stroke: THEME.line,
         'stroke-width': thickH ? 6 : 1.5, 'stroke-opacity': thickH ? 1 : 0.45 }));
     }
-    svg.appendChild(el('rect', { x: 0, y: 0, width: total, height: total, rx: 14, fill: 'none', stroke: palette.line, 'stroke-width': 9 }));
+    svg.appendChild(el('rect', { x: 0, y: 0, width: total, height: total, rx: 14, fill: 'none', stroke: THEME.line, 'stroke-width': 9 }));
 
     for (let i = 0; i < size * size; i++) {
       const given = puzzle[i];
       if (!given && !showSolution) continue;
       const r = Math.floor(i / size), c = i % size;
-      svg.appendChild(el('text', {
-        x: c * cell + cell / 2, y: r * cell + cell / 2,
-        'text-anchor': 'middle', 'dominant-baseline': 'central',
-        'font-size': 62, 'font-weight': given ? 600 : 400,
-        fill: given ? palette.ink : palette.accent,
-        class: 'digit',
-      }, String(given || solution[i])));
+      svg.appendChild(place(symbol(given || solution[i], s, !given), c * cell, r * cell));
     }
     return svg;
+  }
+
+  // Bandeau qui montre les symboles à placer.
+  function legend(s) {
+    const wrap = document.createElement('div');
+    wrap.className = 'legend';
+    const title = document.createElement('span');
+    title.textContent = s.symbols === 'chiffres' ? 'Chiffres à placer :' : s.symbols === 'couleurs' ? 'Couleurs à placer :' : 'Formes à placer :';
+    wrap.appendChild(title);
+    for (let v = 1; v <= s.size; v++) {
+      const svg = el('svg', { viewBox: '0 0 100 100', class: 'legend-item' });
+      const label = s.symbols === 'formes' ? SHAPE_NAMES[v - 1] : String(v);
+      svg.appendChild(el('title', {}, label));
+      svg.appendChild(symbol(v, s, false));
+      wrap.appendChild(svg);
+    }
+    return wrap;
   }
 
   function stars(level) {
     return '★'.repeat(level) + '☆'.repeat(3 - level);
   }
 
-  function makePage(s, palette, games, offset, isSolution) {
+  function makePage(s, games, offset, isSolution) {
     const page = document.createElement('section');
     page.className = `page per-${s.perPage}`;
-    page.style.setProperty('--line', palette.line);
-    page.style.setProperty('--ink', palette.ink);
-    page.style.setProperty('--accent', palette.accent);
-    page.style.setProperty('--tint', palette.boxes[0]);
 
     const header = document.createElement('div');
     header.className = 'page-header';
@@ -127,13 +199,13 @@
       : `<h2>Sudoku</h2><span class="name">Prénom : <i></i></span>` +
         `<span class="level" title="${LEVEL_NAMES[s.difficulty]}">${stars(LEVELS[s.difficulty])}</span>`;
     page.appendChild(header);
+    if (!isSolution) page.appendChild(legend(s));
 
     const grids = document.createElement('div');
     grids.className = 'grids';
     games.forEach((g, i) => {
       const fig = document.createElement('figure');
-      const svg = renderGrid(g, palette, isSolution);
-      fig.appendChild(svg);
+      fig.appendChild(renderGrid(g, s, isSolution));
       const cap = document.createElement('figcaption');
       cap.textContent = `n° ${offset + i + 1}`;
       fig.appendChild(cap);
@@ -142,9 +214,12 @@
     page.appendChild(grids);
 
     if (!isSolution) {
+      const word = SYMBOL_WORDS[s.symbols];
       const rule = document.createElement('p');
       rule.className = 'rule';
-      rule.textContent = `Place les chiffres de 1 à ${s.size} : chacun une seule fois par ligne, par colonne et par carré épais.`;
+      rule.textContent = s.symbols === 'chiffres'
+        ? `Place les chiffres de 1 à ${s.size} : chacun une seule fois par ligne, par colonne et par carré épais.`
+        : `Dessine les ${word}s manquantes : chaque ${word} une seule fois par ligne, par colonne et par carré épais.`;
       page.appendChild(rule);
     }
     return page;
@@ -160,28 +235,26 @@
     render();
   }
 
-  // Redessine sans régénérer (utilisé quand seule la palette ou les solutions changent).
+  // Redessine sans régénérer : les symboles, la palette et les solutions ne changent pas les grilles.
   function render() {
-    const s = Object.assign({}, current.s, { palette: settings().palette, solutions: settings().solutions });
-    const palette = PALETTES[s.palette];
+    const now = settings();
+    const s = Object.assign({}, current.s, { symbols: now.symbols, palette: now.palette, solutions: now.solutions });
     sheets.innerHTML = '';
     const chunks = [];
     for (let p = 0; p < s.pages; p++) chunks.push(current.games.slice(p * s.perPage, (p + 1) * s.perPage));
-    chunks.forEach((games, p) => sheets.appendChild(makePage(s, palette, games, p * s.perPage, false)));
-    if (s.solutions) {
-      chunks.forEach((games, p) => sheets.appendChild(makePage(s, palette, games, p * s.perPage, true)));
-    }
+    chunks.forEach((games, p) => sheets.appendChild(makePage(s, games, p * s.perPage, false)));
+    if (s.solutions) chunks.forEach((games, p) => sheets.appendChild(makePage(s, games, p * s.perPage, true)));
   }
 
+  const RENDER_ONLY = ['symbols', 'palette', 'solutions'];
   form.addEventListener('submit', e => { e.preventDefault(); generate(); });
   form.addEventListener('change', e => {
-    const name = e.target.name;
-    if (name === 'size') updateGivensLabels();
-    if (name === 'palette' || name === 'solutions') render();
+    updateLabels();
+    if (RENDER_ONLY.includes(e.target.name)) render();
     else generate();
   });
   document.getElementById('print').addEventListener('click', () => window.print());
 
-  updateGivensLabels();
+  updateLabels();
   generate();
 })();

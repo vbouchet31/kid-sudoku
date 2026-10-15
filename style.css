@@ -19,6 +19,8 @@ body {
 
 /* ---------- Barre d'options ---------- */
 
+[hidden] { display: none !important; }
+
 .toolbar {
   background: var(--panel);
   border-bottom: 1px solid var(--border);
@@ -75,7 +77,7 @@ legend {
 .swatch {
   display: inline-grid;
   grid-template-columns: repeat(2, 8px);
-  border: 2px solid;
+  border: 2px solid var(--text);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -128,6 +130,10 @@ button:hover { filter: brightness(1.05); }
   flex-direction: column;
   gap: 2.5%;
   overflow: hidden;
+  --line: #3b3363;
+  --ink: #2b2160;
+  --accent: #e8505b;
+  --tint: #f1eef9;
   color: var(--ink);
   container-type: inline-size;
   -webkit-print-color-adjust: exact;
@@ -167,33 +173,50 @@ button:hover { filter: brightness(1.05); }
   white-space: nowrap;
 }
 
+.legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.2cqw;
+  font-size: 2.8cqw;
+  color: var(--line);
+}
+.legend span { margin-right: 1cqw; }
+.legend-item { width: 5.5cqw; height: 5.5cqw; }
+.legend .digit { font-size: 80px; }
+
 .grids {
   flex: 1;
   min-height: 0;
   display: grid;
   gap: 3cqw;
 }
-.per-1 .grids { grid-template: 1fr / 1fr; }
-.per-2 .grids { grid-template: repeat(2, 1fr) / 1fr; }
-.per-4 .grids { grid-template: repeat(2, 1fr) / repeat(2, 1fr); }
-.per-6 .grids { grid-template: repeat(3, 1fr) / repeat(2, 1fr); }
+.per-1 .grids { grid-template: minmax(0, 1fr) / minmax(0, 1fr); }
+.per-2 .grids { grid-template: repeat(2, minmax(0, 1fr)) / minmax(0, 1fr); }
+.per-4 .grids { grid-template: repeat(2, minmax(0, 1fr)) / repeat(2, minmax(0, 1fr)); }
+.per-6 .grids { grid-template: repeat(3, minmax(0, 1fr)) / repeat(2, minmax(0, 1fr)); }
 
+/* La grille remplit sa zone sans dépendre de sa taille intrinsèque. */
 figure {
   margin: 0;
+  position: relative;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  min-width: 0;
 }
 .grid {
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  left: 0;
+  top: 0;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 3.5cqw);
 }
 .digit { font-family: 'Fredoka', 'Comic Sans MS', sans-serif; }
 figcaption {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
   font-size: 2.2cqw;
   color: var(--line);
   opacity: .7;

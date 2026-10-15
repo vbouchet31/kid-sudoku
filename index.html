@@ -33,7 +33,16 @@
       </fieldset>
 
       <fieldset>
-        <legend>Couleurs</legend>
+        <legend>Symboles</legend>
+        <div class="choices">
+          <label><input type="radio" name="symbols" value="chiffres" checked><span>Chiffres</span></label>
+          <label><input type="radio" name="symbols" value="couleurs"><span>Couleurs</span></label>
+          <label><input type="radio" name="symbols" value="formes"><span>Formes</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset id="palette-field" hidden>
+        <legend>Palette</legend>
         <div class="choices" id="palettes"></div>
       </fieldset>
 
