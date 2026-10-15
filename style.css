@@ -158,7 +158,6 @@ button:hover { filter: brightness(1.05); }
 }
 .legend span { margin-right: 1cqw; }
 .legend-item { width: 5.5cqw; height: 5.5cqw; }
-.legend .digit { font-size: 80px; }
 
 .grids {
   flex: 1;
@@ -185,7 +184,6 @@ figure {
   width: 100%;
   height: calc(100% - 3.5cqw);
 }
-.digit { font-family: 'Fredoka', 'Comic Sans MS', sans-serif; }
 figcaption {
   position: absolute;
   bottom: 0;

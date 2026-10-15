@@ -106,6 +106,19 @@
     () => el('path', { d: 'M58 16 A34 34 0 1 0 82 70 A28 28 0 1 1 58 16 Z' }),
   ];
 
+  // Chiffres dessinés en tracés (pas de police) : ils s'impriment partout, y compris sur Android.
+  const DIGITS = [
+    'M40 33 L52 23 V78',
+    'M35 35 C36 23 65 21 65 36 C65 49 49 57 35 78 H67',
+    'M35 29 C45 18 66 22 64 36 C63 45 54 49 46 49 C57 49 67 53 66 64 C65 78 44 82 34 72',
+    'M58 78 V23 L32 62 H70',
+    'M64 24 H39 L36 48 C46 42 66 44 66 61 C66 77 45 82 34 72',
+    'M62 27 C50 18 34 28 34 52 C34 70 42 78 51 78 C61 78 67 70 67 61 C67 51 60 45 51 45 C43 45 36 50 34 57',
+    'M34 24 H66 L46 78',
+    'M50 49 C38 49 37 23 50 23 C63 23 62 49 50 49 C36 49 34 78 50 78 C66 78 64 49 50 49 Z',
+    'M38 73 C50 82 66 72 66 48 C66 30 58 22 49 22 C39 22 33 30 33 39 C33 49 40 55 49 55 C57 55 64 50 66 43',
+  ];
+
   /*
    * Symbole `value` (1..taille) dans une case de 100 × 100.
    * `hint` = case trouvée sur la page des solutions : symbole plus petit, couleur d'accent.
@@ -131,10 +144,8 @@
       if (hint) shape.setAttribute('transform', 'translate(50 50) scale(.75) translate(-50 -50)');
       g.appendChild(shape);
     } else {
-      g.appendChild(el('text', {
-        x: 50, y: 50, 'text-anchor': 'middle', 'dominant-baseline': 'central',
-        'font-size': 62, 'font-weight': hint || s.eco ? 400 : 600, fill: color, class: 'digit',
-      }, String(value)));
+      g.appendChild(el('path', { d: DIGITS[value - 1], fill: 'none', stroke: color,
+        'stroke-width': hint || s.eco ? 6 : 9, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
     }
     return g;
   }
