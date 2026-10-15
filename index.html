@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sudoku pour enfants</title>
+  <meta name="description" content="Générateur de sudoku colorés pour enfants, à imprimer.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="toolbar no-print">
+    <h1>Sudoku pour enfants</h1>
+    <form id="options">
+      <fieldset>
+        <legend>Taille</legend>
+        <div class="choices">
+          <label><input type="radio" name="size" value="4" checked><span>4 × 4</span></label>
+          <label><input type="radio" name="size" value="6"><span>6 × 6</span></label>
+          <label><input type="radio" name="size" value="9"><span>9 × 9</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Difficulté</legend>
+        <div class="choices">
+          <label><input type="radio" name="difficulty" value="facile" checked><span>Facile <small data-givens="facile"></small></span></label>
+          <label><input type="radio" name="difficulty" value="moyen"><span>Moyen <small data-givens="moyen"></small></span></label>
+          <label><input type="radio" name="difficulty" value="difficile"><span>Difficile <small data-givens="difficile"></small></span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Couleurs</legend>
+        <div class="choices" id="palettes"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Mise en page</legend>
+        <div class="row">
+          <label class="field">Grilles par page
+            <select name="perPage">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="4" selected>4</option>
+              <option value="6">6</option>
+            </select>
+          </label>
+          <label class="field">Pages
+            <input type="number" name="pages" min="1" max="20" value="1">
+          </label>
+          <label class="check"><input type="checkbox" name="solutions"> Ajouter les solutions</label>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button type="submit">Nouvelles grilles</button>
+        <button type="button" id="print" class="primary">Imprimer</button>
+      </div>
+    </form>
+  </header>
+
+  <main id="sheets" aria-live="polite"></main>
+
+  <script src="sudoku.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
