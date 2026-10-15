@@ -196,6 +196,10 @@ figcaption {
   opacity: .7;
 }
 
+/* Économie d'encre : textes plus fins. */
+.eco .page-title { font-weight: 400; }
+.eco .legend, .eco .rule, .eco figcaption { font-weight: 300; }
+
 .rule {
   margin: 0;
   text-align: center;

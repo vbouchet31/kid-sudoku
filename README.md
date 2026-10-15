@@ -12,6 +12,7 @@ Générateur de sudoku colorés à imprimer, pensé pour les enfants.
 - **Symboles** : chiffres, couleurs ou formes (rond, carré, triangle, étoile, cœur, losange, hexagone, croix, lune)
 - **Palettes de couleurs** : Arc-en-ciel, Pastel, Nature, Daltonisme (Okabe-Ito)
 - **Mise en page** : 1, 2, 4 ou 6 grilles par page A4, plusieurs pages, solutions en option
+- **Économie d'encre** : fond blanc, traits plus fins (les traits des carrés restent plus épais), chiffres non gras, formes en contour, ronds de couleur plus petits
 
 Les grilles sont **générées à la volée** dans le navigateur (aucune grille pré-enregistrée). Chaque grille a **une solution unique** : le générateur part d'une grille complète aléatoire, puis retire des cases une par une en vérifiant à chaque fois (avec un solveur) qu'il reste une seule solution.
 

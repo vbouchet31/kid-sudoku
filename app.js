@@ -55,6 +55,7 @@
       perPage: Number(f.get('perPage')),
       pages: Math.min(20, Math.max(1, Number(f.get('pages')) || 1)),
       solutions: f.get('solutions') === 'on',
+      eco: f.get('eco') === 'on',
     };
   }
 
@@ -108,21 +109,31 @@
   /*
    * Symbole `value` (1..taille) dans une case de 100 × 100.
    * `hint` = case trouvée sur la page des solutions : symbole plus petit, couleur d'accent.
+   * En mode économie d'encre : ronds plus petits, formes en contour, chiffres non gras.
    */
   function symbol(value, s, hint) {
     const g = el('g', {});
+    const color = hint ? THEME.accent : THEME.ink;
     if (s.symbols === 'couleurs') {
-      g.appendChild(el('circle', { cx: 50, cy: 50, r: hint ? 24 : 33, fill: PALETTES[s.palette].colors[value - 1],
-        stroke: THEME.ink, 'stroke-width': 2.5, 'stroke-dasharray': hint ? '6 5' : 'none' }));
+      const r = s.eco ? (hint ? 16 : 22) : (hint ? 24 : 33);
+      g.appendChild(el('circle', { cx: 50, cy: 50, r, fill: PALETTES[s.palette].colors[value - 1],
+        stroke: THEME.ink, 'stroke-width': s.eco ? 1.5 : 2.5, 'stroke-dasharray': hint ? '6 5' : 'none' }));
     } else if (s.symbols === 'formes') {
       const shape = SHAPES[value - 1]();
-      shape.setAttribute('fill', hint ? THEME.accent : THEME.ink);
+      if (s.eco) {
+        shape.setAttribute('fill', 'none');
+        shape.setAttribute('stroke', color);
+        shape.setAttribute('stroke-width', 5);
+        shape.setAttribute('stroke-linejoin', 'round');
+      } else {
+        shape.setAttribute('fill', color);
+      }
       if (hint) shape.setAttribute('transform', 'translate(50 50) scale(.75) translate(-50 -50)');
       g.appendChild(shape);
     } else {
       g.appendChild(el('text', {
         x: 50, y: 50, 'text-anchor': 'middle', 'dominant-baseline': 'central',
-        'font-size': 62, 'font-weight': hint ? 400 : 600, fill: hint ? THEME.accent : THEME.ink, class: 'digit',
+        'font-size': 62, 'font-weight': hint || s.eco ? 400 : 600, fill: color, class: 'digit',
       }, String(value)));
     }
     return g;
@@ -141,22 +152,23 @@
     const svg = el('svg', { viewBox: `-6 -6 ${total + 12} ${total + 12}`, class: 'grid', role: 'img' });
     svg.setAttribute('aria-label', `Sudoku ${size} par ${size}`);
 
-    // Un carré sur deux légèrement teinté pour bien repérer les carrés.
-    for (let r = 0; r < size; r++) {
+    // Un carré sur deux légèrement teinté pour bien repérer les carrés (sauf en économie d'encre).
+    for (let r = 0; r < size && !s.eco; r++) {
       for (let c = 0; c < size; c++) {
         const shade = (Math.floor(r / box.rows) + Math.floor(c / box.cols)) % 2;
         svg.appendChild(el('rect', { x: c * cell, y: r * cell, width: cell, height: cell, fill: shade ? THEME.boxB : THEME.boxA }));
       }
     }
 
+    const thin = s.eco ? 1 : 1.5, thick = s.eco ? 3 : 6, outer = s.eco ? 4 : 9;
     for (let i = 1; i < size; i++) {
       const thickV = i % box.cols === 0, thickH = i % box.rows === 0;
       svg.appendChild(el('line', { x1: i * cell, y1: 0, x2: i * cell, y2: total, stroke: THEME.line,
-        'stroke-width': thickV ? 6 : 1.5, 'stroke-opacity': thickV ? 1 : 0.45 }));
+        'stroke-width': thickV ? thick : thin, 'stroke-opacity': thickV ? 1 : 0.45 }));
       svg.appendChild(el('line', { x1: 0, y1: i * cell, x2: total, y2: i * cell, stroke: THEME.line,
-        'stroke-width': thickH ? 6 : 1.5, 'stroke-opacity': thickH ? 1 : 0.45 }));
+        'stroke-width': thickH ? thick : thin, 'stroke-opacity': thickH ? 1 : 0.45 }));
     }
-    svg.appendChild(el('rect', { x: 0, y: 0, width: total, height: total, rx: 14, fill: 'none', stroke: THEME.line, 'stroke-width': 9 }));
+    svg.appendChild(el('rect', { x: 0, y: 0, width: total, height: total, rx: s.eco ? 8 : 14, fill: 'none', stroke: THEME.line, 'stroke-width': outer }));
 
     for (let i = 0; i < size * size; i++) {
       const given = puzzle[i];
@@ -186,7 +198,7 @@
 
   function makePage(s, games, offset, isSolution) {
     const page = document.createElement('section');
-    page.className = `page per-${s.perPage}`;
+    page.className = `page per-${s.perPage}${s.eco ? ' eco' : ''}`;
 
     if (isSolution) {
       const title = document.createElement('h2');
@@ -233,7 +245,7 @@
   // Redessine sans régénérer : les symboles, la palette et les solutions ne changent pas les grilles.
   function render() {
     const now = settings();
-    const s = Object.assign({}, current.s, { symbols: now.symbols, palette: now.palette, solutions: now.solutions });
+    const s = Object.assign({}, current.s, { symbols: now.symbols, palette: now.palette, solutions: now.solutions, eco: now.eco });
     sheets.innerHTML = '';
     const chunks = [];
     for (let p = 0; p < s.pages; p++) chunks.push(current.games.slice(p * s.perPage, (p + 1) * s.perPage));
@@ -241,7 +253,7 @@
     if (s.solutions) chunks.forEach((games, p) => sheets.appendChild(makePage(s, games, p * s.perPage, true)));
   }
 
-  const RENDER_ONLY = ['symbols', 'palette', 'solutions'];
+  const RENDER_ONLY = ['symbols', 'palette', 'solutions', 'eco'];
   form.addEventListener('submit', e => { e.preventDefault(); generate(); });
   form.addEventListener('change', e => {
     updateLabels();
