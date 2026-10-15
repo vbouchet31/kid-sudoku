@@ -115,7 +115,7 @@
     'M64 24 H39 L36 48 C46 42 66 44 66 61 C66 77 45 82 34 72',
     'M62 27 C50 18 34 28 34 52 C34 70 42 78 51 78 C61 78 67 70 67 61 C67 51 60 45 51 45 C43 45 36 50 34 57',
     'M34 24 H66 L46 78',
-    'M50 49 C38 49 37 23 50 23 C63 23 62 49 50 49 C36 49 34 78 50 78 C66 78 64 49 50 49 Z',
+    'M50 48.5 A12.5 12.5 0 1 1 50 23.5 A12.5 12.5 0 1 1 50 48.5 Z M50 48.5 A15 14.5 0 1 0 50 77.5 A15 14.5 0 1 0 50 48.5 Z',
     'M38 73 C50 82 66 72 66 48 C66 30 58 22 49 22 C39 22 33 30 33 39 C33 49 40 55 49 55 C57 55 64 50 66 43',
   ];
 
@@ -145,7 +145,8 @@
       g.appendChild(shape);
     } else {
       g.appendChild(el('path', { d: DIGITS[value - 1], fill: 'none', stroke: color,
-        'stroke-width': hint || s.eco ? 6 : 9, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+        'stroke-width': hint || s.eco ? 7 : 10, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+        transform: 'translate(50 50) scale(.82) translate(-50 -50)' }));
     }
     return g;
   }
