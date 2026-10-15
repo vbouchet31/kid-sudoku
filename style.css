@@ -133,44 +133,18 @@ button:hover { filter: brightness(1.05); }
   --line: #3b3363;
   --ink: #2b2160;
   --accent: #e8505b;
-  --tint: #f1eef9;
   color: var(--ink);
   container-type: inline-size;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 4cqw;
-  padding: 2cqw 3cqw;
-  border-radius: 3cqw;
-  background: var(--tint);
-  border: .5cqw solid var(--line);
-}
-.page-header h2 {
+.page-title {
   margin: 0;
-  font-size: 6cqw;
+  text-align: center;
+  font-size: 4cqw;
   font-weight: 600;
   color: var(--line);
-}
-.page-header .name {
-  flex: 1;
-  display: flex;
-  align-items: baseline;
-  gap: 1.5cqw;
-  font-size: 3cqw;
-}
-.page-header .name i {
-  flex: 1;
-  border-bottom: .3cqw dashed var(--line);
-}
-.page-header .level {
-  margin-left: auto;
-  font-size: 4cqw;
-  color: var(--accent);
-  white-space: nowrap;
 }
 
 .legend {

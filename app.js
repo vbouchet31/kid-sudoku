@@ -10,7 +10,8 @@
     },
     pastel: {
       name: 'Pastel',
-      colors: ['#ff8a8a', '#8ec5ff', '#ffe66d', '#9be39b', '#ffb870', '#c3a6ff', '#7fe0d6', '#d9b38c', '#b0b0b0'],
+      // Menthe, pêche, pervenche, anis, rose poudré, sable, bleu glacier, mauve, gris perle.
+      colors: ['#6fd6bd', '#ffb38a', '#a9b4f5', '#c6e377', '#f6a6c8', '#e8d29a', '#a8dcf0', '#d7a6e6', '#c9c9d1'],
     },
     nature: {
       name: 'Nature',
@@ -25,9 +26,8 @@
 
   const SHAPE_NAMES = ['rond', 'carré', 'triangle', 'étoile', 'cœur', 'losange', 'hexagone', 'croix', 'lune'];
 
-  const THEME = { line: '#3b3363', ink: '#2b2160', accent: '#e8505b', boxA: '#ffffff', boxB: '#f1eef9' };
+  const THEME = { line: '#3b3363', ink: '#2b2160', accent: '#e8505b', boxA: '#ffffff', boxB: '#f8f7fc' };
 
-  const LEVELS = { facile: 1, moyen: 2, difficile: 3 };
   const LEVEL_NAMES = { facile: 'Facile', moyen: 'Moyen', difficile: 'Difficile' };
   const SYMBOL_WORDS = { chiffres: 'chiffre', couleurs: 'couleur', formes: 'forme' };
 
@@ -184,21 +184,16 @@
     return wrap;
   }
 
-  function stars(level) {
-    return '★'.repeat(level) + '☆'.repeat(3 - level);
-  }
-
   function makePage(s, games, offset, isSolution) {
     const page = document.createElement('section');
     page.className = `page per-${s.perPage}`;
 
-    const header = document.createElement('div');
-    header.className = 'page-header';
-    header.innerHTML = isSolution
-      ? `<h2>Solutions</h2><span class="level">${s.size} × ${s.size} · ${LEVEL_NAMES[s.difficulty]}</span>`
-      : `<h2>Sudoku</h2><span class="name">Prénom : <i></i></span>` +
-        `<span class="level" title="${LEVEL_NAMES[s.difficulty]}">${stars(LEVELS[s.difficulty])}</span>`;
-    page.appendChild(header);
+    if (isSolution) {
+      const title = document.createElement('h2');
+      title.className = 'page-title';
+      title.textContent = `Solutions · ${s.size} × ${s.size} · ${LEVEL_NAMES[s.difficulty]}`;
+      page.appendChild(title);
+    }
     if (!isSolution) page.appendChild(legend(s));
 
     const grids = document.createElement('div');
